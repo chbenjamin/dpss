@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1565814514056.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1467846235",
+    "id" : "B313721B",
+    "lastKnownWriteTime" : 1565208485,
+    "last_content_update" : 1565208485,
+    "path" : "C:/Users/12151/Desktop/DPSS/Introduction to R Programming/L10/L10 - RMarkdown.Rmd",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "174,67",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

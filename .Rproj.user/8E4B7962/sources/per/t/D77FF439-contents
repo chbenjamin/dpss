@@ -1,0 +1,175 @@
+---
+title: "L11 - Git and Command Line"
+author: "Daniel Snow - The University of Chicago"
+date: "7/15/2019"
+output: html_document
+url_color: blue
+---
+
+So far in this class, we've abstracted over two important parts of computer/data literacy: using the command line and git. Both are vital tools when working in the data/CS world, especially if you're working with other people.
+
+## Command Line Overview
+
+The command line is a way to navigate through and interact with files and folders on your computer or on a remote machine. It provides access to a number of extremely powerful utilities that are great for data science and programming. Windows and Mac have different command lines, on macOS it is called “Terminal,” on Windows the default is “Command Prompt”. 
+
+* NOTE: Note, Windows does not have git built-in. Windows users should install Git Bash from the following link: https://gitforwindows.org/
+
+Being familiar with the command line will unlock thousands of tools that are *only* available via CLI (command line interface). Learning the basics of CL is one of the most important things you can do as a beginner programmer.
+
+## Command Line Basics
+
+The command line has hundreds, perhaps thousands, of built-in commands. We only need a small handful of them to accomplish a fair amount. Here are some of the most commonly used:
+
+
+### pwd
+
+`pwd` (print working directory) will output the path to your current folder from the root of your system. It's useful to figure out where you currently are.
+
+
+### cd
+
+`cd` (change directory) will change the folder you're currently in. To change directory, type `cd` followed by the path of the directory you want to change to. For example:
+
+`cd /` will go to the root of your computer
+`cd /Users/` will go to the Users folder
+
+There are a few shortcuts for paths in *unix systems:
+
+`cd ..` will go back one folder
+`cd ../..` will go back two folders
+`cd ~` will go to your home directory
+
+
+### ls
+
+`ls` (list, or list segments) will list the files and folders in your current working directory. It has many flags to change its output. Flags are options passed to a command using the following syntax:
+
+`ls` list folders and files
+`ls -a` list ALL folders and files (see -a flag)
+`ls -lah` multiple flags passed (list long format, all, with human-readable file sizes)
+
+
+### man
+
+`man` (manual) will pull up the help documentation for a given command. If you don't know what a flag does or aren't sure of a command's syntax, check its man pages.
+
+`man ls` show manual for `ls`
+`man cd` show manual for `cd`
+
+
+### mv/cp
+
+`mv` (move) is the command to move (or rename) files via the command line. The syntax if as follows:
+
+`mv current_file_name_or_position new_file_name_or_position`
+
+For example, if I wanted to move a file called HW1.R into a new folder named Completed, I would do the following:
+
+`mv HW1.R Completed/HW1.R`
+
+OR
+
+`mv HW1.R Completed/.`
+
+`cp` (copy) has essentially the same syntax as `mv`, but will copy files instead of moving them. 
+
+
+### Tips and Tricks
+
+Autocomplete: Using the Tab key inside the command line will autocomplete paths and filenames. To use this, just type out the first few letters of the path you want, then hit Tab and enter.
+
+Command history: Pressing the up arrow key will show you your previously entered command. Hitting `Ctrl + r` will let you search your history of entered commands.
+
+Ctrl movement: Holding the `Ctrl` key will allow you to use the following movements:
+
+`Ctrl + a` jump to start of line
+`Ctrl + e` jump to end of line
+`Ctrl + right/left arrow` jump to next/previous word
+`Ctrl + k` delete everything after cursor position
+
+
+## Git Overview
+
+Git is a way to manage and track changes to files. It is what's known as version control software, and is almost certainly the most popular version control tool in the world. It also provides a way to sync your work with a remote location, typically GitHub, where your changes can be seen, pulled to other machines, and approved by collaborators. 
+
+[Handy Git Guide](https://rogerdudler.github.io/git-guide/)
+
+Here's an example of the git commands you will typically use in the order you will use them:
+
+```
+git clone https://github.com/dfsnow/tt
+
+# Do some work
+
+git add tt.R
+git rm *.png
+git commit -m "Fixed Dan's plots"
+git push
+```
+
+## Git Commands
+
+For the purposes of this class, we will only use a few of the many available `git` commands:
+
+
+### git clone
+
+`git clone` creates a copy of a local or GitHub repository (repo). By cloning a repo, we can download files from GitHub, make changes locally, and then push those changes back to GitHub to make them available to others. Cloning a GitHub repo will also set that repo as the default remote repo (the default location to push to). The syntax for cloning from GitHub is:
+
+`git clone https://github.com/$username/$repo`
+
+Replacing the username and repository name as appropriate. By default, `git clone` will place the cloned repo into your current command line/terminal directory. You can change this by specifying a path after the repo name in the clone command, like so:
+
+`git clone https://github.com/$username/$repo /path/to/directory`
+
+
+### git add
+
+Once a repository is cloned, you can make local changes to the files in that repo. For `git` to recognize those changes, you must tell it which files to track. Using `git add` will add files (or their changes) to `git`'s indexing system. You must use `git add` to update the index each time you make changes to a file or add a new file to your local repository. The syntax of `git add` is:
+
+`git add filename`
+
+You can also use glob patterns (wildcards) to specify which files you want to add. For example, if you want to add all `.Rmd` files, you could use:
+
+`git add *.Rmd`
+
+Where `*` is a wildcard character. You can also use `git add .` to add everything in your working directory.
+
+
+### git commit
+
+Once you've added files or changes, you need to commit them. `git commit` is a way to take a snapshot of the state of your files, i.e. *commit* your changes to `git`'s memory. Each commit represents your files at a specific point in time, and you can jump back to any one of those points without losing data. You must commit before pushing to GitHub. To commit files or changes inside files, first use `git add`, then use:
+
+`git commit -m "message"`
+
+Where `message` is something describing the changes you've made. Most first time commits use the message `Initial commit`.
+
+
+### git push
+
+After committing your changes, you can now push your commit to GitHub. If you've cloned a GitHub repo, `git` will push back to that repo by default. As such, the syntax for `git push` is simply:
+
+`git push`
+
+This will push any files or changes you've made to the remote repository, in this case GitHub, where you can view them online.
+
+
+### git pull
+
+If you want to retrieve changes made to a remote repository, such as one on GitHub, you can use `git pull`. Pulling will download changes to your local repository. Assuming you've already set the remote repository or used `git clone`, the syntax of pulling is simply:
+
+`git pull`
+
+Note that if you have unadded/unindexed changes in your files, `git pull` will overwrite them.
+
+
+### git status
+
+If you need to see the current git status of files in your project, `git status` is the command to use. It will return a list of changed files and whether or not they are staged (added).
+
+
+### Using .gitignore
+
+By default, `git add .` or `git add *` will add all files within a folder. Sometimes this is inconvenient, such as when working with large CSV files that don't need to be tracked or on GitHub. In such a case, you can use a `.gitignore` file to ensure that `git` does not add these files to the index when using `git add`. For example, if one wants to ignore all CSVs, simply make a file called `.gitignore` in your working directory, then add the line `*.csv`. This will ignore all files with the extension `.csv`.
+
+

@@ -1,0 +1,325 @@
+---
+title: "Capstone Project - Hate Crimes in the United States"
+author: "Benjamin Yang"
+date: "2019/8/15"
+output: 
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+# Introduction
+A hate crime (also known as a bias-motivated crime or bias crime) is a prejudice-motivated crime
+which occurs when a perpetrator targets a victim because of their membership (or perceived
+membership) in a certain social group or race.
+In recent years, under various kinds of factors, the hate crimes in the U.S is surfacing a new
+trend.
+This short study will analyze all kinds of factors that may influence hate crimes and provide some
+reasonable explanation on it, by using OLS regression model and some interesting plots.
+
+# Variables and Data sources
+## Variables
+    Independent variables:
+    1. Median household income
+    2. Unemployment rate
+    3. Rate of people with only high school diploma
+    4. Rate of white people who are below poverty line
+    5. GINI index of each state
+    6. Rate of non-white people
+    7. Rate of non-citizen people
+    
+    Additional independent variables:
+    8. Whether or not it is a union state or slave state during the civil war
+    9. Rate of LGBT people
+    
+    Dependent variable:
+    10. Annual hate crimes per 100k population
+In this research, we used data from United States Census Bureau for most of our variables
+(median household income, unemployment rate, high school accomplishment rate, white people
+poverty rate, GINI index, non-white rate) in 2016.  
+From Kaiser Family Foundation, we get the data for non-citizen rate in 2017.  
+From Federal Bureau of Investigation, we get the data for hate crimes from 2008 to 2017.   
+From Gallup special report, we get the data for LGBT people by states in 2016.  
+From the library of congress civil war desk, we get the data for the 15 slave states before and
+during the american civil war from 1789 to 1861.  
+
+## Additional variables explanation  
+After a glimpse of the seven variables provided, we found out that the cultural factor is basically not included in the regression. However, there always exists a correlation between cultural factors and realistic factors, so that it is so hard to get rid of multicollinearity. Also, culture is hard to observe and measure. We chose if_slave as a cultural dummy variable. It has several advantages: Firstly, civil war is an historical event, it has nothing to do with a lot of variables in nowadays. Secondly, we have confidence to presume that whether or not it was a slave state have a lot to do with the state's cultural background. For example, the state of Geogia, which was a slave state, is still one of the most racist states in the United States, according to World Population Review.
+Also, the groups of LGBT people might also be an unresting factor that may trigger hate crimes, for the reason that some conservative people may still can not accept this group of people.
+
+# Potiential bias
+## Lack of Comprehensiveness
+The data we collected from FBI may be biased because this data was submitted voluntarily by law enforcement agencies of each state, so a large number of crimes may not be reported. Moreover, this rogram collects data on only prosecutable hate crimes, which make up a fraction of hate incidents (which includes non-prosecutable offenses, such as circulation of white nationalist recruitment materials on college campuses).
+
+## Awareness bias
+Heightened news coverage of hate incidents may have encouraged people to report incidents that they would not have otherwise reported. From the other hand, state agency may also hide a lot of hate crimes after they come to realize that more cases of hate crimes may do harm to the state's reputation, thus may cause repulsion among those people who want to invest in this state.
+
+## Definition bias
+Hate crime is a quite ambiguous and obscure terminology to a lot of people, even to those who work in a law enforcement agency. So different people may have various understandings to it, and it may also varies by the different cultural background by states. SO quite a lot of officers may have different judgements on a same case.
+
+```{r,include=FALSE}
+# Loading necessary packages
+library(tidycensus)
+library(tidyverse)
+library(lubridate)
+library(readxl)
+library(ggplot2)
+library(sf)
+library(gganimate)
+library(gifski)
+library(png)
+library(stargazer)
+library(plotly)
+```
+
+
+# Regression
+## Procedure
+The first regression is the original one including seven variables provided. 
+After adding the if_slave variable, we did a second regression. 
+And the third regression includes all the nine independent variables.
+The last regression includes all the variables except if_slave.
+
+## Regression outcome
+```{r, include=FALSE, warning=FALSE}
+# Calculating hate crimes per 100k people
+crimes <- read_xls("Table_12_Agency_Hate_Crime_Reporting_by_State_2017.xls")
+crimes <- mutate(crimes, crimes_per = number/Population_covered * 100000)
+# Downloading data from census
+data <- get_acs(
+  geography = "state",
+  year = 2016,
+  variables = c(unemployed_pop = "B27011_014",
+                median_income = "B19013_001",
+                total_pop = "B01003_001", 
+                hs_pop = "B06009_003",
+                white_poor_pop = "B17001A_002",
+                gini = "B19083_001",
+                white_pop = "B01001A_001",
+                non_citizen = "B05001_006",
+                non_citizen_total = "B05001_001",
+                hs_pop_total = "B06009_001",
+                unemployed_pop_total = "B27011_002",
+                white_poor_pop_total = "B17001_001"
+                ),
+  geometry = TRUE,
+  shift_geo = TRUE)
+# Cleaning and calculating each variables
+data <- data %>%
+  select(-moe) %>%
+  spread(key = "variable", value = "estimate") %>%
+  mutate(
+    unemployed_per = unemployed_pop/unemployed_pop_total,
+    hs_per = hs_pop/hs_pop_total,
+    white_poor_per = white_poor_pop/white_poor_pop_total,
+    non_white_per = 1 - (white_pop/total_pop),
+    non_citizen_per = non_citizen/non_citizen_total
+  ) %>%
+  left_join(crimes, by = c("NAME" = "Participating_state")) %>%
+  # Ruling out NA terms
+  filter(NAME != "Puerto Rico" & NAME != "Hawaii") 
+slave <- read.csv("50_us_states_all_data.csv")
+data <- left_join(data, slave, by = c("NAME" = "state"))
+lgbt <- read_xls("LGBT.xls", col_names = FALSE)
+data <- left_join(data, lgbt, by = c("NAME" = "...1"))
+names(data)[28] <- c("lgbt")
+# Saving only useful columns
+data <- select(data, NAME, crimes_per, unemployed_per, median_income, hs_per, 
+               white_poor_per, non_white_per, non_citizen_per, if_slave, gini, lgbt, geometry)
+```
+```{r, warning=FALSE, results='asis', echo=FALSE}
+# Do regressions
+reg_1 <- lm(crimes_per ~ median_income + unemployed_per + hs_per + white_poor_per + non_white_per +non_citizen_per + gini, data = data)
+reg_2 <- lm(crimes_per ~ median_income + unemployed_per + hs_per + white_poor_per + non_white_per +non_citizen_per + gini + if_slave, data = data)
+reg_3 <- lm(crimes_per ~ median_income + unemployed_per + hs_per + white_poor_per + non_white_per +non_citizen_per + gini + if_slave + lgbt, data = data)
+reg_4 <- lm(crimes_per ~ median_income + unemployed_per + hs_per + white_poor_per + non_white_per +non_citizen_per + gini + lgbt, data = data)
+stargazer(reg_1, reg_2, reg_3, reg_4, title = "Regression", type = 'html', header = FALSE)
+```
+## Findings
+
+**if_slave has a significant impact over hate crimes, but it seems counterintuitive**
+From our second regression, it makes sense that whether or not it was a slave state behaves significant. However, the coefficient of it is a negative, which means, if one state was a slave state during the civil war, then it is likely to have less hate crimes nowadays. This confuses me a lot. Because in common sense, a slave state may relatively tend to have a tradition of discrimination, thus lead to more hate crimes. so we should keep an eye on it and hold a reserved attitude.
+
+**LGBT per capita has a significant impact over hate crimes, which is reasonable**
+After doing our third regression, we can see that the R-square goes up greatly, which means the percentage of LGBT people has a significant effect over hate crimes. The significance level of lgbt is 100%, and p-value is quite small, this also proves the importance of this variable. This is understandable, beacuse many hate crimes are target at the LGBT people for some conservative reasons. As for the if_slave variable, it becomes completely insignificant, it meets our expectation.
+For further comfirmation, we do the fourth regression which rules out the if_slave variable. It turns out that the ajusted R-square goes up instead of going down. And this proves our theory.
+It is safe to conclude that the perccentage of LGBT people has a significant effect on hate crimes while whether it was a slave state does not necessarily lead to more hate crimes.
+
+**A large amount of hate crimes are targeting LGBT people**
+According to FBI, even after the legalization of same-sex relations in states of the United States, LGBT persons have continued to be targeted by attacks - both violent and non-violent - against themselves by individuals who claim any degree of emotional or religious motivation for their crimes. This phenomenon has been variously attributed to the influence of institutional and authoritarian homophobia in various environments, and the prevention of violent or criminal coercion on the basis of sexual orientation, gender identity has become increasingly associated with general anti-bullying and anti-hate crime movements. 
+
+# Hate crimes map in the United States
+```{r, echo=FALSE, out.width = '600', fig.align='center'}
+# Quantile the data, make it looks morw tidy and clean
+data <- mutate(data, qtile = factor(ntile(crimes_per, 5)))
+data %>%
+  ggplot()+
+  geom_sf(aes(fill = qtile)) +
+  theme_void() +
+  scale_fill_brewer(palette = "YlGnBu", name = "")+
+  theme(
+    legend.position = "top",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, face = "italic")
+  )+
+  labs(
+    title = "HATE CRIMES IN THE U.S.A",
+    caption = "Source: census",
+    subtitle = "Average hate crimes per 100,000 residents, 2017"
+  )
+```
+We divide 50 states into five quantile, level 1 means least, level 5 means highest
+
+# Non-map plot
+```{r, echo=FALSE, warning=FALSE, fig.align='center'}
+data$crimes_per[which(data$crimes_per >= 1.968)] <- 'big'
+data$crimes_per[which(data$crimes_per < 1.968)] <- 'small'
+data$crimes_per <- as.factor(data$crimes_per)
+plot <- plot_ly(data, x = ~gini, y = ~median_income, z = ~lgbt, color = ~crimes_per, colors = c('#800000','#0062ac'),text = ~paste('state:', NAME, '<br>non white:', non_white_per, '<br>non citizen', non_citizen_per, '<br>high school:', hs_per, '<br>unemployment:', unemployed_per))%>%   
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'gini',
+                                   gridcolor = 'rgb(255, 255, 255)',
+                                   zerolinewidth = 1,
+                                   ticklen = 5,
+                                   gridwidth = 2),
+                      yaxis = list(title = 'median income',
+                                   gridcolor = 'rgb(255, 255, 255)',
+                                   zerolinewidth = 1,
+                                   ticklen = 5,
+                                   gridwidth = 2),
+                      zaxis = list(title = 'lgbt',
+                                   gridcolor = 'rgb(255, 255, 255)',
+                                   zerolinewidth = 1,
+                                   ticklen = 5,
+                                   gridwidth = 2)),
+         paper_bgcolor = 'rgb(243, 243, 243)',
+         plot_bgcolor = 'rgb(243, 243, 243)',
+         title = "50 States hate crimes per 100k population")
+plot
+```
+This 3D plot can perfectly demonstrate the significance of three variables: GINI index, LGBT percentage and median income.
+From the angle of median income, we can see that the red dots(high hate crimes rate) are generally on the right (high gini index);
+From the angle of gini index, we can see that the blue dots(low hate crimes rate) are generally on the right (high median income) and red dots (high hate crimes rate) are generally on the higher side of lgbt.
+And we also get an outlier, which is the District of Columbia.
+
+# Hate crimes total numbers by years
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+# Loading data from 10 excel sheets
+year <- 2008:2017
+for (i in year) {
+  if (i == 2008){
+    # Selecting certain area of the sheet
+    crimes_year_total <- read_xls("2008.xls", range = "C4:E4", col_names = FALSE)
+    crimes_year_total <- crimes_year_total %>%
+      select(...1, ...3)
+    # Rename them
+    names(crimes_year_total)[1:2] <- c("2008pop","2008crimes")
+  }
+  else{
+    # A for-loop to get them all
+    later_total <- read_xls(paste(i,".xls", sep = ""), range = "C4:E4", col_names = FALSE)
+    later_total <- later_total %>%
+      select(...1, ...3)
+    names(later_total)[1:2] <- c(paste(i, "pop", sep = ""),paste(i, "crimes", sep = ""))
+    crimes_year_total <- cbind(crimes_year_total, later_total)
+  }
+}
+for (i in 1:10) {
+  # Calculating hate crimes per 100k people for each year
+  crimes_year_total[20+i] <- (crimes_year_total[2*i]/crimes_year_total[2*i-1])*100000
+  names(crimes_year_total)[20+i] <- paste(i+2007)
+}
+crimes_year_total <- select(crimes_year_total, 21:30)
+crimes_year_total <- gather(crimes_year_total, key = "year", value = "number")
+crimes_year_total$year <- as.numeric(crimes_year_total$year)
+# Plotting them
+crimes_year_total %>%
+  ggplot()+
+  geom_line(aes(x = year, y = number), color = "#7593d9", size = 1.5) +
+  geom_point(aes(x = year, y = number), size = 2, color = "#0e3388") +
+  scale_x_continuous(breaks = c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017))+
+  theme_bw(base_size = 11)+
+  labs(
+    title = "Hate Crimes in the United States",
+    subtitle = "Average hate crimes per 100'000 people in each year", 
+    caption = "Source: FBI  "
+  )
+```
+
+# Dynamic hate crimes by state in 2008 - 2017
+```{r, include=FALSE, message=FALSE, fig.align='center'}
+year <- 2008:2017
+# Like above, select data in every state by year and merge them into one dataframe
+for (i in year) {
+  if (i == 2008){
+    crimes_year <- read_xls("2008.xls", range = "A5:E56", col_names = FALSE)
+    crimes_year <- crimes_year %>%
+      select(...1, ...3, ...5)
+    names(crimes_year)[1:3] <- c("states","2008pop","2008crimes")
+  }
+  else{
+    later <- read_xls(paste(i,".xls", sep = ""), range = "A5:E56", col_names = FALSE)
+    later <- later %>%
+      select(...1, ...3, ...5)
+    names(later)[1:3] <- c("states",paste(i, "pop", sep = ""),paste(i, "crimes", sep = ""))
+    crimes_year <- left_join(crimes_year, later, by = "states")
+  }
+}
+for (i in 1:10) {
+    crimes_year[21+i] <- (crimes_year[1+2*i]/crimes_year[2*i])*100000
+    names(crimes_year)[21+i] <- paste(i+2007)
+}
+crimes_year <- crimes_year %>%
+  select(1, 22:31) 
+crimes_year <- gather(crimes_year, key = "year", value = "number", -states)
+crimes_year <- filter(crimes_year, !is.na(number))
+geometry <- select(data, NAME, geometry)
+geometry <- left_join(geometry, crimes_year, by = c("NAME" = "states"))
+geometry$year <- as.numeric(geometry$year)
+
+class(geometry$year)
+
+# Setting a function to make plots
+plot_maker <- function(x) {
+geometry %>%
+  filter(year == x) %>%
+  ggplot() +
+  geom_sf(aes(fill = number)) +
+    theme_void() +
+    scale_fill_distiller(palette = "Spectral", 
+                         name = "", 
+                         breaks = c(2.5,5,7.5),
+                         limits = c(0, 10)
+                         )+
+    theme(
+      legend.position = "top",
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      plot.subtitle = element_text(hjust = 0.5, face = "italic")
+    )+
+    labs(
+      title = "HATE CRIMES IN THE U.S.A",
+      caption = "Source: FBI",
+      subtitle = paste("Average hate crimes per 100,000 residents ", x)
+    )
+  ggsave(str_c("plot", x, ".png"))
+}
+# Using this function to make 10 consecutive plots
+#map(2008:2017, plot_maker)
+```
+
+
+```{r, out.width = '600', fig.align='center', echo=FALSE}
+knitr::include_graphics('hate crimes.gif')
+```
+(It's super ugly to directly use gifski to make an .gif because there will be no transition animation. So I loaded all of the images to Adobe Premiere and make a new .gif)
+
+# Conclusions
+From the research we have done above, we can safely conclude the following points:
+
+**The percentage of LGBT people, median income, gini index and percentage of non-citizen people, these three variables, have a significant correlation between the happening of hate crimes in the United States.**
+
+**According to our findings, Whether or not the state was a slave state or union state simply has nothing to do with hate crimes, because in nowadays America, hate crimes are more likely to triggered by sex-minority people and immigrants or political attitudes.**
+
+**During the first seven years from 2008 to 2014, number of hate crimes has been generally decreasing due to some factors like financial crisis, fluctuating oil price etc. From 2014 to 2017, immigrants issue was brought up, thus may increase the happening of hate crimes.**
+
+**At the state level, the distribution of hate crimes percentage remains generally unchanged: Wast coast states have more hate crimes percentage than those from the east.**

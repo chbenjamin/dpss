@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1565620456764.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "918471397",
+    "id" : "E1E8BFDC",
+    "lastKnownWriteTime" : 1565887316,
+    "last_content_update" : 1565887316,
+    "path" : "C:/Users/12151/Desktop/DPSS/Introduction to R Programming/CS/code.R",
+    "project_path" : "code.R",
+    "properties" : {
+        "cursorPosition" : "221,0",
+        "scrollLine" : "191",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

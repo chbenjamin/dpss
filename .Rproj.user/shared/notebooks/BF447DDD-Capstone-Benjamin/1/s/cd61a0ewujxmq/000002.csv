@@ -1,0 +1,53 @@
+"0","crimes <- read_xls(""Table_12_Agency_Hate_Crime_Reporting_by_State_2017.xls"")"
+"2","New names:
+* `` -> ...6
+* `` -> ...7
+"
+"0","crimes <- mutate(crimes, crimes_per = number/Population_covered * 100000)"
+"0","data <- get_acs("
+"0","  geography = ""state"","
+"0","  year = 2016,"
+"0","  variables = c(unemployed_pop = ""B27011_014"","
+"0","                median_income = ""B19013_001"","
+"0","                total_pop = ""B01003_001"", "
+"0","                hs_pop = ""B06009_003"","
+"0","                white_poor_pop = ""B17001A_002"","
+"0","                gini = ""B19083_001"","
+"0","                white_pop = ""B01001A_001"","
+"0","                non_citizen = ""B05001_006"","
+"0","                non_citizen_total = ""B05001_001"","
+"0","                hs_pop_total = ""B06009_001"","
+"0","                unemployed_pop_total = ""B27011_002"","
+"0","                white_poor_pop_total = ""B17001_001"""
+"0","                ),"
+"0","  geometry = TRUE,"
+"0","  shift_geo = TRUE)"
+"2","Getting data from the 2012-2016 5-year ACS
+"
+"2","Using feature geometry obtained from the albersusa package
+"
+"2","Please note: Alaska and Hawaii are being shifted and are not to scale.
+"
+"0","data <- data %>%"
+"0","  select(-moe) %>%"
+"0","  spread(key = ""variable"", value = ""estimate"") %>%"
+"0","  mutate("
+"0","    unemployed_per = unemployed_pop/unemployed_pop_total,"
+"0","    hs_per = hs_pop/hs_pop_total,"
+"0","    white_poor_per = white_poor_pop/white_poor_pop_total,"
+"0","    non_white_per = 1 - (white_pop/total_pop),"
+"0","    non_citizen_per = non_citizen/non_citizen_total"
+"0","  ) %>%"
+"0","  left_join(crimes, by = c(""NAME"" = ""Participating_state"")) %>%"
+"0","  filter(NAME != ""Puerto Rico"" & NAME != ""Hawaii"") "
+"0","slave <- read.csv(""50_us_states_all_data.csv"")"
+"0","data <- left_join(data, slave, by = c(""NAME"" = ""state""))"
+"0","lgbt <- read_xls(""LGBT.xls"", col_names = FALSE)"
+"2","New names:
+* `` -> ...1
+* `` -> ...2
+"
+"0","data <- left_join(data, lgbt, by = c(""NAME"" = ""...1""))"
+"0","names(data)[28] <- c(""lgbt"")"
+"0","data <- select(data, NAME, crimes_per, unemployed_per, median_income, hs_per, "
+"0","               white_poor_per, non_white_per, non_citizen_per, if_slave, gini, lgbt, geometry)"

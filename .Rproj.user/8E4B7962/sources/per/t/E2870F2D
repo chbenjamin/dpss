@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1565812944517.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "173|53|198|0|\n",
+    "hash" : "3826628148",
+    "id" : "E2870F2D",
+    "lastKnownWriteTime" : 1565898383,
+    "last_content_update" : 1565898750895,
+    "path" : "C:/Users/12151/Desktop/DPSS/Introduction to R Programming/CS/Capstone-Benjamin.Rmd",
+    "project_path" : "Capstone-Benjamin.Rmd",
+    "properties" : {
+        "cursorPosition" : "311,42",
+        "scrollLine" : "299",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
